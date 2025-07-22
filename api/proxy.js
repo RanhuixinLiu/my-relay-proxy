@@ -1,25 +1,33 @@
 // 檔案路徑: api/proxy.js
 
-const fetch = require('node-fetch'); // <-- 改回 require
+const fetch = require('node-fetch');
 
-module.exports = async (req, res) => { // <-- 同時也改回 Vercel 更傳統的寫法
+module.exports = async (req, res) => {
   const targetApiHost = 'http://39.108.191.53:8089';
   const targetPath = req.url.replace('/api/proxy', '');
   const targetUrl = `${targetApiHost}${targetPath}`;
 
   console.log(`Rewritten proxy request to: ${targetUrl}`);
 
+  // 準備要轉發的請求選項
+  const fetchOptions = {
+    method: req.method,
+    headers: {
+      'Content-Type': req.headers['content-type'] || 'application/json',
+      'App-Key': req.headers['app-key'],
+      'App-Secret': req.headers['app-secret'],
+      'X-Token': req.headers['x-token'],
+    },
+  };
+
+  // 【關鍵修正】只有在不是 GET 或 HEAD 請求時，才加入 body
+  if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
+    fetchOptions.body = JSON.stringify(req.body);
+  }
+
   try {
-    const response = await fetch(targetUrl, {
-      method: req.method,
-      headers: {
-        'Content-Type': req.headers['content-type'] || 'application/json',
-        'App-Key': req.headers['app-key'],
-        'App-Secret': req.headers['app-secret'],
-        'X-Token': req.headers['x-token'],
-      },
-      body: req.body ? JSON.stringify(req.body) : null,
-    });
+    // 使用我們準備好的選項來發送請求
+    const response = await fetch(targetUrl, fetchOptions);
     
     const data = await response.json();
 
