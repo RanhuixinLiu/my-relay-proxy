@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MR0_QDR0810继电器控制面板</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #2c3e50);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background: rgba(0, 0, 30, 0.7);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            padding: 30px;
+            margin-top: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00c9ff, #92fe9d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .device-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(20, 30, 60, 0.6);
+            border-radius: 10px;
+        }
+        
+        .info-item {
+            text-align: center;
+        }
+        
+        .info-label {
+            font-size: 0.9rem;
+            color: #b0c4de;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .relays-container {
+            background: rgba(20, 30, 60, 0.6);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .section-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            color: #4dabf7;
+            font-size: 1.4rem;
+            border-bottom: 2px solid rgba(77, 171, 247, 0.3);
+            padding-bottom: 10px;
+        }
+        
+        .section-title i {
+            margin-right: 10px;
+            font-size: 1.6rem;
+        }
+        
+        .relay-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .relay-card {
+            background: linear-gradient(145deg, #152642, #1e3a5f);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s, box-shadow 0.3s, background 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .relay-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+        
+        .relay-card.on {
+            background: linear-gradient(145deg, #2a9d8f, #1e6f5c);
+        }
+        
+        .relay-card.off {
+            background: linear-gradient(145deg, #e63946, #d00000);
+        }
+        
+        .relay-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: #ffd166;
+        }
+        
+        .relay-name {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .relay-status {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            padding: 5px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            background: rgba(0, 0, 0, 0.3);
+            transition: background-color 0.3s;
+        }
+        
+        .relay-status.on {
+            background: rgba(42, 157, 143, 0.8);
+        }
+        
+        .relay-status.off {
+            background: rgba(230, 57, 70, 0.8);
+        }
+        
+        .control-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.95rem;
+        }
+        
+        .btn-on {
+            background: linear-gradient(90deg, #2a9d8f, #1e6f5c);
+            color: white;
+        }
+        
+        .btn-off {
+            background: linear-gradient(90deg, #e63946, #d00000);
+            color: white;
+        }
+        
+        .btn-toggle {
+            background: linear-gradient(90deg, #ffd166, #ff9e00);
+            color: #1d3557;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .config-panel {
+            background: rgba(20, 30, 60, 0.6);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #a9d6e5;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(10, 20, 40, 0.5);
+            color: white;
+            font-size: 1rem;
+        }
+        
+        .input-group input:focus {
+            outline: none;
+            border-color: #4dabf7;
+            box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.3);
+        }
+        
+        .log-container {
+            background: rgba(20, 30, 60, 0.6);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            grid-column: 1 / -1;
+        }
+        
+        .log-box {
+            height: 200px;
+            overflow-y: auto;
+            background: rgba(10, 20, 40, 0.5);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-family: monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        
+        .log-entry {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        
+        .log-time {
+            color: #90e0ef;
+            margin-right: 10px;
+        }
+        
+        .log-success {
+            color: #80ffdb;
+        }
+        
+        .log-error {
+            color: #ff758f;
+        }
+        
+        .log-warning {
+            color: #ffd166;
+        }
+        
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .btn-save {
+            background: linear-gradient(90deg, #3a86ff, #3a0ca3);
+            color: white;
+            padding: 12px 25px;
+            font-size: 1.1rem;
+        }
+        
+        .btn-test {
+            background: linear-gradient(90deg, #8338ec, #5e60ce);
+            color: white;
+            padding: 12px 25px;
+            font-size: 1.1rem;
+        }
+        
+        .btn-refresh {
+            background: linear-gradient(90deg, #06d6a0, #118ab2);
+            color: white;
+            padding: 12px 25px;
+            font-size: 1.1rem;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            color: #b0c4de;
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            width: 100%;
+        }
+        
+        .pulse {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #2a9d8f;
+            box-shadow: 0 0 0 0 rgba(42, 157, 143, 0.7);
+            animation: pulse 2s infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(42, 157, 143, 0.7);
+            }
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(42, 157, 143, 0);
+            }
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(42, 157, 143, 0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-plug"></i> MR0_QDR0810 继电器控制面板</h1>
+            <p>通过工业云平台API控制8通道继电器模块</p>
+        </header>
+        
+        <div class="device-info">
+            <div class="info-item">
+                <div class="info-label">设备名称</div>
+                <div class="info-value" id="device-title">MR0_QDR0810</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">设备ID</div>
+                <div class="info-value" id="device-id">17300</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">最后更新时间</div>
+                <div class="info-value" id="last-update">N/A</div>
+            </div>
+        </div>
+        
+        <div class="dashboard">
+            <div class="relays-container">
+                <div class="section-title">
+                    <i class="fas fa-microchip"></i>
+                    <h2>继电器状态控制 (8通道)</h2>
+                </div>
+                
+                <div class="relay-grid" id="relay-container">
+                    </div>
+            </div>
+            
+            <div class="config-panel">
+                <div class="section-title">
+                    <i class="fas fa-cog"></i>
+                    <h2>云平台API配置</h2>
+                </div>
+                
+                <div class="input-group">
+                    <label for="api-host">API主机地址</label>
+                    <input type="text" id="api-host" placeholder="http://ip:port" value="http://39.108.191.53:8089">
+                </div>
+                
+                <div class="input-group">
+                    <label for="app-key">应用密钥 (App Key)</label>
+                    <input type="text" id="app-key" placeholder="输入您的App Key">
+                </div>
+                
+                <div class="input-group">
+                    <label for="app-secret">应用密钥 (App Secret)</label>
+                    <input type="password" id="app-secret" placeholder="输入您的App Secret">
+                </div>
+                
+                <div class="input-group">
+                    <label for="x-token">X-Token</label>
+                    <input type="text" id="x-token" placeholder="输入您的X-Token">
+                </div>
+                
+                <div class="input-group">
+                    <label for="device-id">设备参数 (PID, DID)</label>
+                    <input type="text" id="device-params" placeholder="pid=16955&did=52709&did=..." value="pid=16955&did=52709&did=866597079362537">
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-save" id="save-config"><i class="fas fa-save"></i> 保存配置</button>
+                    <button class="btn btn-test" id="test-connection"><i class="fas fa-wifi"></i> 测试连接</button>
+                    <button class="btn btn-refresh" id="refresh-status"><i class="fas fa-sync"></i> 刷新状态</button>
+                </div>
+            </div>
+            
+            <div class="log-container">
+                <div class="section-title">
+                    <i class="fas fa-terminal"></i>
+                    <h2>操作日志</h2>
+                    <span class="pulse"></span>
+                </div>
+                
+                <div class="log-box" id="log-box">
+                    </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>工业云平台继电器控制系统 &copy; 2023 | 基于MR0_QDR0810模块与工业云API开发</p>
+    </footer>
+
+    <script>
+        // 全局设备状态数据
+        let deviceData = null;
+
+        // --- 核心功能函数 ---
+
+        // 添加日志
+        function addLog(message, type = 'info') {
+            const logBox = document.getElementById('log-box');
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            
+            const now = new Date();
+            const timeString = `[${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}]`;
+            
+            const typeClass = {
+                success: 'log-success',
+                error: 'log-error',
+                warning: 'log-warning'
+            }[type] || '';
+
+            logEntry.innerHTML = `<span class="log-time">${timeString}</span> <span class="${typeClass}">${message}</span>`;
+            
+            logBox.appendChild(logEntry);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        // 生成继电器卡片
+        function generateRelayCards() {
+            const relayContainer = document.getElementById('relay-container');
+            relayContainer.innerHTML = '';
+
+            if (!deviceData || !deviceData.devs || deviceData.devs.length === 0) {
+                addLog('无设备数据，请先获取设备状态', 'warning');
+                return;
+            }
+
+            deviceData.devs[0].dps.forEach((relay) => {
+                const isOn = relay.value === 1;
+                
+                const relayCard = document.createElement('div');
+                relayCard.className = `relay-card ${isOn ? 'on' : 'off'}`;
+                relayCard.dataset.relayId = relay.id;
+                
+                relayCard.innerHTML = `
+                    <div class="relay-icon"><i class="fas fa-power-off"></i></div>
+                    <div class="relay-name">${relay.title}</div>
+                    <div class="relay-status ${isOn ? 'on' : 'off'}">状态: ${isOn ? '开启' : '关闭'}</div>
+                    <div class="control-buttons">
+                        <button class="btn btn-on" ${isOn ? 'disabled' : ''} data-id="${relay.id}" data-name="${relay.title}" data-state="1">
+                            <i class="fas fa-play"></i> 开启
+                        </button>
+                        <button class="btn btn-off" ${!isOn ? 'disabled' : ''} data-id="${relay.id}" data-name="${relay.title}" data-state="0">
+                            <i class="fas fa-stop"></i> 关闭
+                        </button>
+                    </div>
+                `;
+                relayContainer.appendChild(relayCard);
+            });
+            
+            // 为新生成的按钮添加事件监听器
+            relayContainer.querySelectorAll('.btn-on, .btn-off').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const relayId = this.getAttribute('data-id');
+                    const relayName = this.getAttribute('data-name');
+                    const state = this.getAttribute('data-state') === '1'; // true for on, false for off
+                    controlRelay(relayId, relayName, state);
+                });
+            });
+        }
+
+        // 获取API配置
+        function getApiConfig() {
+            return {
+                apiHost: '/api/proxy',
+                appKey: document.getElementById('app-key').value.trim(),
+                appSecret: document.getElementById('app-secret').value.trim(),
+                xToken: document.getElementById('x-token').value.trim(),
+                deviceParams: document.getElementById('device-params').value.trim()
+            };
+        }
+
+        // 获取设备状态（真实API调用）
+        async function fetchDeviceStatus() {
+            const config = getApiConfig();
+            if (!config.apiHost || !config.appKey || !config.appSecret || !config.xToken || !config.deviceParams) {
+                addLog('错误：请先完整配置API凭据和设备参数', 'error');
+                return false;
+            }
+            
+            addLog('正在获取设备真实状态...', 'info');
+            
+            const url = `${config.apiHost}/api/v1/device/lastdp?${config.deviceParams}`;
+            
+            try {
+                const apiResponse = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'App-Key': config.appKey,
+                        'App-Secret': config.appSecret,
+                        'X-Token': config.xToken
+                    }
+                });
+
+                if (!apiResponse.ok) {
+                    throw new Error(`网络错误: ${apiResponse.status} ${apiResponse.statusText}`);
+                }
+
+                const responseData = await apiResponse.json();
+
+                if (responseData.code === 0 && responseData.data) {
+                    deviceData = responseData.data; // 更新全局数据
+                    
+                    // 更新设备信息显示
+                    document.getElementById('device-title').textContent = deviceData.devs[0].title;
+                    document.getElementById('device-id').textContent = deviceData.devs[0].id;
+                    const now = new Date();
+                    const updateTime = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+                    document.getElementById('last-update').textContent = updateTime;
+                    
+                    generateRelayCards(); // 使用真实数据重新生成UI
+                    addLog('设备状态更新成功 (真实数据)', 'success');
+                    return true;
+                } else {
+                    throw new Error(`API错误: ${responseData.msg || '未知错误'}`);
+                }
+            } catch (error) {
+                addLog(`获取设备状态失败: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        // 控制继电器（真实API调用）
+        async function controlRelay(relayId, relayName, state) {
+            const config = getApiConfig();
+            if (!config.apiHost || !config.appKey || !config.appSecret || !config.xToken || !config.deviceParams) {
+                addLog('错误：请先完整配置API凭据和设备参数', 'error');
+                return;
+            }
+
+            addLog(`正在发送指令: ${state ? '开启' : '关闭'} ${relayName}...`, 'info');
+
+            // *** 重要假设 ***
+            // 假设控制端点是 /api/v1/device/dp
+            // 假设请求体需要 pid 和 dps 对象
+            // 您可能需要根据您的API文档调整此部分
+            const controlUrl = `${config.apiHost}/api/v1/device/dp`;
+            const params = new URLSearchParams(config.deviceParams);
+            const pid = params.get('pid');
+
+            if (!pid) {
+                addLog('控制失败: 无法从设备参数中解析出 pid', 'error');
+                return;
+            }
+
+            const requestBody = {
+                pid: pid,
+                dps: {
+                    [relayId]: state ? 1 : 0
+                }
+            };
+
+            try {
+                const apiResponse = await fetch(controlUrl, {
+                    method: 'POST', // 通常控制是POST请求
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'App-Key': config.appKey,
+                        'App-Secret': config.appSecret,
+                        'X-Token': config.xToken
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!apiResponse.ok) {
+                    throw new Error(`网络错误: ${apiResponse.status} ${apiResponse.statusText}`);
+                }
+                
+                const responseData = await apiResponse.json();
+
+                if (responseData.code === 0) {
+                    addLog(`指令发送成功: ${relayName} 已${state ? '开启' : '关闭'}`, 'success');
+                    // 指令成功后，延迟一小段时间再刷新状态，以确保服务器已更新
+                    setTimeout(fetchDeviceStatus, 1000); 
+                } else {
+                    throw new Error(`API错误: ${responseData.msg || '未知错误'}`);
+                }
+
+            } catch (error) {
+                addLog(`控制继电器失败: ${error.message}`, 'error');
+                 // 即使控制失败，也刷新一下状态以同步最新情况
+                setTimeout(fetchDeviceStatus, 1000);
+            }
+        }
+
+        // --- 事件监听器 ---
+
+        document.addEventListener('DOMContentLoaded', () => {
+            addLog('继电器控制界面已加载', 'info');
+            addLog('请配置API凭据并点击"测试连接"或"刷新状态"以开始', 'warning');
+            generateRelayCards(); // 初始生成空的或基于默认数据的卡片
+        });
+
+        document.getElementById('save-config').addEventListener('click', () => {
+            const config = getApiConfig();
+            // 使用 localStorage 在浏览器中保存配置
+            localStorage.setItem('apiHost', config.apiHost);
+            localStorage.setItem('appKey', config.appKey);
+            localStorage.setItem('xToken', config.xToken);
+            localStorage.setItem('deviceParams', config.deviceParams);
+            addLog('配置已保存至浏览器本地存储', 'success');
+        });
+
+        document.getElementById('test-connection').addEventListener('click', async () => {
+            addLog('开始测试连接...', 'info');
+            const success = await fetchDeviceStatus();
+            if (success) {
+                addLog('测试连接成功，已获取到设备状态', 'success');
+            } else {
+                addLog('测试连接失败，请检查配置和网络', 'error');
+            }
+        });
+
+        document.getElementById('refresh-status').addEventListener('click', fetchDeviceStatus);
+
+        // --- 初始化 ---
+
+        // 尝试从 localStorage 加载已保存的配置
+        (function loadConfig() {
+            const savedHost = localStorage.getItem('apiHost');
+            const savedAppKey = localStorage.getItem('appKey');
+            const savedXToken = localStorage.getItem('xToken');
+            const savedDeviceParams = localStorage.getItem('deviceParams');
+
+            if (savedHost) document.getElementById('api-host').value = savedHost;
+            if (savedAppKey) document.getElementById('app-key').value = savedAppKey;
+            if (savedXToken) document.getElementById('x-token').value = savedXToken;
+            if (savedDeviceParams) document.getElementById('device-params').value = savedDeviceParams;
+
+            if (savedHost || savedAppKey || savedXToken || savedDeviceParams) {
+                addLog('已从浏览器加载保存的配置', 'info');
+            }
+        })();
+
+    </script>
+</body>
+</html>
