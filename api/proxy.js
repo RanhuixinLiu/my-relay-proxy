@@ -1,15 +1,10 @@
 // 檔案路徑: api/proxy.js
 
-import fetch from 'node-fetch';
+const fetch = require('node-fetch'); // <-- 改回 require
 
-export default async function handler(req, res) {
-  // 目標 API 的主機地址
+module.exports = async (req, res) => { // <-- 同時也改回 Vercel 更傳統的寫法
   const targetApiHost = 'http://39.108.191.53:8089';
-
-  // 我們的 rewrite 規則會保留原始 URL，我們只需要移除代理的前綴即可
   const targetPath = req.url.replace('/api/proxy', '');
-
-  // 組合出最終要請求的 URL
   const targetUrl = `${targetApiHost}${targetPath}`;
 
   console.log(`Rewritten proxy request to: ${targetUrl}`);
@@ -38,4 +33,4 @@ export default async function handler(req, res) {
     console.error('Proxy Error:', error);
     res.status(500).json({ error: 'Proxy request failed', details: error.message });
   }
-}
+};
