@@ -1,25 +1,31 @@
-// File Path: api/proxy.js
+// 檔案路徑: api/proxy.js
 
 const fetch = require('node-fetch');
+const crypto = require('crypto');
 
-// This object will cache the token in memory
 let cachedToken = {
   value: null,
   expiresAt: 0,
 };
 
-// --- This function gets the token ---
+// --- 獲取 Token 的核心函數 ---
 async function getValidToken() {
-  // Check if the cached token is still valid
   if (cachedToken.value && Date.now() < cachedToken.expiresAt - 60000) {
     return cachedToken.value;
   }
 
-  // Fetch a new token if needed
-  const appKey = process.env.APP_KEY;
-  const appSecret = process.env.APP_SECRET;
+  // 從 Vercel 環境變數中讀取【使用者憑證】
+  const username = process.env.LOGIN_USERNAME;
+  const password = process.env.LOGIN_PASSWORD;
 
-  // The correct authentication endpoint you found!
+  // 檢查是否已設定環境變數
+  if (!username || !password) {
+    throw new Error('Username or Password is not set in Vercel Environment Variables.');
+  }
+
+  // 對【使用者密碼】進行 MD5 加密
+  const hashedPassword = crypto.createHash('md5').update(password).digest('hex');
+
   const AUTH_ENDPOINT = '/api/v1/login/login';
   const targetApiHost = 'http://39.108.191.53:8089';
   const authUrl = `${targetApiHost}${AUTH_ENDPOINT}`;
@@ -28,10 +34,10 @@ async function getValidToken() {
     const response = await fetch(authUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      // IMPORTANT: Check your API documentation to confirm the body parameter names
+      // 使用【使用者名稱】和【加密後的密碼】進行登入
       body: JSON.stringify({
-        appKey: appKey,
-        appSecret: appSecret,
+        username: username,
+        password: hashedPassword,
       }),
     });
 
@@ -40,11 +46,10 @@ async function getValidToken() {
     if (!response.ok || !data.data || !data.data.accessToken) {
       throw new Error(`Failed to fetch token: ${data.msg || 'Unknown error'}`);
     }
-
-    const accessToken = data.data.accessToken;
+    
+    const accessToken = data.data.accessToken; 
     const expiresIn = data.data.expiresIn;
 
-    // Update the cache
     cachedToken.value = accessToken;
     cachedToken.expiresAt = Date.now() + expiresIn * 1000;
 
@@ -58,13 +63,12 @@ async function getValidToken() {
 }
 
 
-// --- This is our main proxy handler ---
+// --- 主要的代理處理函數 ---
 module.exports = async (req, res) => {
   try {
-    // 1. Get a valid X-Token automatically
     const xToken = await getValidToken();
+    const appKey = process.env.APP_KEY; // 讀取 App Key
 
-    // 2. Prepare to forward the user's request
     const targetApiHost = 'http://39.108.191.53:8089';
     const targetPath = req.url.replace('/api/proxy', '');
     const targetUrl = `${targetApiHost}${targetPath}`;
@@ -73,19 +77,18 @@ module.exports = async (req, res) => {
       method: req.method,
       headers: {
         'Content-Type': req.headers['content-type'] || 'application/json',
-        'App-Key': process.env.APP_KEY, // Use the App Key from environment variables
-        'X-Token': xToken, // Use the automatically fetched token
+        'App-Key': appKey, // 在最終請求中依然傳遞 App-Key
+        'X-Token': xToken,
       },
     };
 
     if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
       fetchOptions.body = JSON.stringify(req.body);
     }
-
-    // 3. Forward the request to the target API
+    
     const targetResponse = await fetch(targetUrl, fetchOptions);
     const responseData = await targetResponse.json();
-
+    
     res.status(targetResponse.status).json(responseData);
 
   } catch (error) {
