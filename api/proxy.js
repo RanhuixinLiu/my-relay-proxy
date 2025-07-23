@@ -11,7 +11,7 @@ let cachedToken = {
 
 // --- This function gets the token ---
 async function getValidToken() {
-  // Check if the cached token is still valid (with a 60-second buffer)
+  // Check if the cached token is still valid
   if (cachedToken.value && Date.now() < cachedToken.expiresAt - 60000) {
     return cachedToken.value;
   }
@@ -24,10 +24,13 @@ async function getValidToken() {
     throw new Error('Username or Password is not set in Vercel Environment Variables.');
   }
 
-  // Hash the password using MD5
-  const hashedPassword = crypto.createHash('md5').update(password).digest('hex');
+  // 1. Calculate the standard MD5 hash
+  const standardHash = crypto.createHash('md5').update(password).digest('hex');
 
-  // The correct authentication endpoint you found
+  // 2. Apply the custom shuffling algorithm you discovered!
+  const finalPassword = standardHash.slice(-6) + standardHash.slice(6, 26) + standardHash.slice(0, 6);
+
+  // The correct authentication endpoint
   const AUTH_ENDPOINT = '/api/v1/login/login';
   const targetApiHost = 'http://39.108.191.53:8089';
   const authUrl = `${targetApiHost}${AUTH_ENDPOINT}`;
@@ -36,27 +39,25 @@ async function getValidToken() {
     const response = await fetch(authUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      // Use the username and hashed password for the login request body
+      // Use the username and the final shuffled password
       body: JSON.stringify({
         username: username,
-        password: hashedPassword,
+        password: finalPassword,
       }),
     });
 
     const data = await response.json();
 
-    // Use the correct field names from the response you provided
     if (!response.ok || !data.data || !data.data.token) {
       throw new Error(`Failed to fetch token: ${data.msg || 'Unknown error'}`);
     }
 
     const accessToken = data.data.token;
-    const expiresIn = data.data.expires_in; // Corrected field name
+    const expiresIn = data.data.expires_in;
 
     // Update the cache
-    // Note: The expiresIn value looks like a future timestamp, not a duration. We will use it directly.
     cachedToken.value = accessToken;
-    cachedToken.expiresAt = expiresIn * 1000; // Convert timestamp to milliseconds
+    cachedToken.expiresAt = expiresIn * 1000;
 
     return accessToken;
 
@@ -71,11 +72,9 @@ async function getValidToken() {
 // --- This is our main proxy handler ---
 module.exports = async (req, res) => {
   try {
-    // 1. Get a valid X-Token automatically
     const xToken = await getValidToken();
     const appKey = process.env.APP_KEY;
 
-    // 2. Prepare to forward the user's request
     const targetApiHost = 'http://39.108.191.53:8089';
     const targetPath = req.url.replace('/api/proxy', '');
     const targetUrl = `${targetApiHost}${targetPath}`;
@@ -85,7 +84,7 @@ module.exports = async (req, res) => {
       headers: {
         'Content-Type': req.headers['content-type'] || 'application/json',
         'App-Key': appKey,
-        'X-Token': xToken, // Use the automatically fetched token
+        'X-Token': xToken,
       },
     };
 
@@ -93,7 +92,6 @@ module.exports = async (req, res) => {
       fetchOptions.body = JSON.stringify(req.body);
     }
     
-    // 3. Forward the request to the target API
     const targetResponse = await fetch(targetUrl, fetchOptions);
     const responseData = await targetResponse.json();
     
