@@ -423,11 +423,6 @@
                 </div>
                 
                 <div class="input-group">
-                    <label for="x-token">X-Token</label>
-                    <input type="text" id="x-token" placeholder="输入您的X-Token">
-                </div>
-                
-                <div class="input-group">
                     <label for="device-id">设备参数 (PID, DID)</label>
                     <input type="text" id="device-params" placeholder="pid=16955&did=52709&did=..." value="pid=16955&did=52709&did=866597079362537">
                 </div>
@@ -533,7 +528,6 @@
                 apiHost: '/api/proxy',
                 appKey: document.getElementById('app-key').value.trim(),
                 appSecret: document.getElementById('app-secret').value.trim(),
-                xToken: document.getElementById('x-token').value.trim(),
                 deviceParams: document.getElementById('device-params').value.trim()
             };
         }
