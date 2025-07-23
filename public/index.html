@@ -413,16 +413,6 @@
                 </div>
                 
                 <div class="input-group">
-                    <label for="app-key">应用密钥 (App Key)</label>
-                    <input type="text" id="app-key" placeholder="输入您的App Key">
-                </div>
-                
-                <div class="input-group">
-                    <label for="app-secret">应用密钥 (App Secret)</label>
-                    <input type="password" id="app-secret" placeholder="输入您的App Secret">
-                </div>
-                
-                <div class="input-group">
                     <label for="device-id">设备参数 (PID, DID)</label>
                     <input type="text" id="device-params" placeholder="pid=16955&did=52709&did=..." value="pid=16955&did=52709&did=866597079362537">
                 </div>
@@ -526,8 +516,6 @@
         function getApiConfig() {
             return {
                 apiHost: '/api/proxy',
-                appKey: document.getElementById('app-key').value.trim(),
-                appSecret: document.getElementById('app-secret').value.trim(),
                 deviceParams: document.getElementById('device-params').value.trim()
             };
         }
@@ -535,7 +523,7 @@
         // 获取设备状态（真实API调用）
         async function fetchDeviceStatus() {
             const config = getApiConfig();
-            if (!config.apiHost || !config.appKey || !config.appSecret || !config.xToken || !config.deviceParams) {
+            if (!config.deviceParams) {
                 addLog('错误：请先完整配置API凭据和设备参数', 'error');
                 return false;
             }
@@ -586,7 +574,7 @@
         // 控制继电器（真实API调用）
         async function controlRelay(relayId, relayName, state) {
             const config = getApiConfig();
-            if (!config.apiHost || !config.appKey || !config.appSecret || !config.xToken || !config.deviceParams) {
+            if (!config.deviceParams) {
                 addLog('错误：请先完整配置API凭据和设备参数', 'error');
                 return;
             }
