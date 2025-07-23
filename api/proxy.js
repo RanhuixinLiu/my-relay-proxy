@@ -1,16 +1,22 @@
-// 檔案路徑: api/proxy.js (偵錯版本)
+// File Path: api/proxy.js
 
 const fetch = require('node-fetch');
 const crypto = require('crypto');
 
-// ... (cachedToken 物件定義不變) ...
-let cachedToken = { value: null, expiresAt: 0 };
+// This object will cache the token in memory
+let cachedToken = {
+  value: null,
+  expiresAt: 0,
+};
 
+// --- This function gets the token ---
 async function getValidToken() {
+  // Check if the cached token is still valid (with a 60-second buffer)
   if (cachedToken.value && Date.now() < cachedToken.expiresAt - 60000) {
     return cachedToken.value;
   }
 
+  // Fetch a new token if needed
   const username = process.env.LOGIN_USERNAME;
   const password = process.env.LOGIN_PASSWORD;
 
@@ -18,20 +24,10 @@ async function getValidToken() {
     throw new Error('Username or Password is not set in Vercel Environment Variables.');
   }
 
-  // --- 新增的偵錯日誌 ---
-  console.log(`--- DEBUG INFO ---`);
-  console.log(`Username from Env: ${username}`);
-  // 警告：在正式環境中印出密碼是不安全的，偵錯完成後應移除
-  console.log(`Password from Env: ${password ? '********' : '(not set)'}`); 
-  // --- 結束 ---
-
+  // Hash the password using MD5
   const hashedPassword = crypto.createHash('md5').update(password).digest('hex');
 
-  // --- 新增的偵錯日誌 ---
-  console.log(`Hashed Password Sent: ${hashedPassword}`);
-  console.log(`------------------`);
-  // --- 結束 ---
-
+  // The correct authentication endpoint you found
   const AUTH_ENDPOINT = '/api/v1/login/login';
   const targetApiHost = 'http://39.108.191.53:8089';
   const authUrl = `${targetApiHost}${AUTH_ENDPOINT}`;
@@ -40,6 +36,7 @@ async function getValidToken() {
     const response = await fetch(authUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      // Use the username and hashed password for the login request body
       body: JSON.stringify({
         username: username,
         password: hashedPassword,
@@ -48,16 +45,18 @@ async function getValidToken() {
 
     const data = await response.json();
 
-    if (!response.ok || data.msg === 'login fail' || !data.data || !data.data.accessToken) {
-       // 讓錯誤訊息更明確
-      throw new Error(`Failed to fetch token: API responded with message - "${data.msg || 'Unknown error'}"`);
+    // Use the correct field names from the response you provided
+    if (!response.ok || !data.data || !data.data.token) {
+      throw new Error(`Failed to fetch token: ${data.msg || 'Unknown error'}`);
     }
-    
-    const accessToken = data.data.accessToken; 
-    const expiresIn = data.data.expiresIn;
 
+    const accessToken = data.data.token;
+    const expiresIn = data.data.expires_in; // Corrected field name
+
+    // Update the cache
+    // Note: The expiresIn value looks like a future timestamp, not a duration. We will use it directly.
     cachedToken.value = accessToken;
-    cachedToken.expiresAt = Date.now() + expiresIn * 1000;
+    cachedToken.expiresAt = expiresIn * 1000; // Convert timestamp to milliseconds
 
     return accessToken;
 
@@ -68,12 +67,15 @@ async function getValidToken() {
   }
 }
 
-// ... (module.exports 主處理函數不變) ...
+
+// --- This is our main proxy handler ---
 module.exports = async (req, res) => {
   try {
+    // 1. Get a valid X-Token automatically
     const xToken = await getValidToken();
     const appKey = process.env.APP_KEY;
 
+    // 2. Prepare to forward the user's request
     const targetApiHost = 'http://39.108.191.53:8089';
     const targetPath = req.url.replace('/api/proxy', '');
     const targetUrl = `${targetApiHost}${targetPath}`;
@@ -83,7 +85,7 @@ module.exports = async (req, res) => {
       headers: {
         'Content-Type': req.headers['content-type'] || 'application/json',
         'App-Key': appKey,
-        'X-Token': xToken,
+        'X-Token': xToken, // Use the automatically fetched token
       },
     };
 
@@ -91,6 +93,7 @@ module.exports = async (req, res) => {
       fetchOptions.body = JSON.stringify(req.body);
     }
     
+    // 3. Forward the request to the target API
     const targetResponse = await fetch(targetUrl, fetchOptions);
     const responseData = await targetResponse.json();
     
